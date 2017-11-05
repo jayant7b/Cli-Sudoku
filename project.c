@@ -7,13 +7,15 @@ void g_swap_colm(int from, int to);
 void g_print();
 int gen();
 void gusr();
+void load();
 
 int sol();
-int solSudo(int puzzle[][9]);
+int solveSudoku(int puzzle[][9]);
 int findempty(int puzzle[][9], int row, int column );
 int isValid(int number, int puzzle[][9], int row, int column);
-int sudoHelp(int puzzle[][9], int row, int column);
+int sudokuHelper(int puzzle[][9], int row, int column);
 void printSudoku(int puzzle[][9]);
+int aout(int puzzle[][9]);
 
 static int soln[9][9], zr[9][9];
 static int source[9][9] = {
@@ -27,17 +29,31 @@ static int source[9][9] = {
 	7, 9, 8, 3, 1, 2, 4, 6, 5,
 	4, 6, 5, 7, 9, 8, 3, 1, 2
 	};
-int main() {
-	int x;
-	printf("Sudoku\n  1.Generate\n  2.Solve\n");
-	scanf("%d", &x);
-	if(x == 1)
-		gen();
-	else if(x == 2)
-		sol();
+int main(int argc, char **argv) {
+	int x ,i, j, puzzle[9][9];
+	if(argc > 1) {
+		FILE *fp;
+		fp = fopen(argv[1], "r");
+		for(i = 0; i < 9; i++)
+			for(j = 0; j < 9; j++)
+				fscanf(fp, "%d ", &puzzle[i][j]);
+	
+		fclose(fp);
+		aout(puzzle);
+	}
 	else {
-		printf("Invalid Option\n");
-		exit(0);
+		printf("Sudoku\n  1.Generate\n  2.Solve\n  3.Load Saved\n");
+		scanf("%d", &x);
+		if(x == 1)
+			gen();
+		else if(x == 2)
+			sol();
+		else if(x == 3)
+			load();
+		else {
+			printf("Invalid Option\n");
+			exit(0);
+		}
 	}
 }
 static int hint;
@@ -132,7 +148,7 @@ void g_print() {
 }
 
 void gusr() {
-	int nxt, i, j, m1, m2;
+	int nxt, i, j, m1, m2, p, q;
 	for(m1 = 0; m1 < 9; m1++) {
 		for(m2 = 0; m2 < 9; m2++) {
 			if (2 == m2 || 5 == m2) {
@@ -170,28 +186,61 @@ void gusr() {
 		printf("\nSolution:\n");
 		for(m1 = 0; m1 < 9; m1++) {
 			for(m2 = 0; m2 < 9; m2++) {
-				if (2 == m2 || 5 == m2) {
-					printf("%d | ", soln[m1][m2]);
-				}
-				else if (8 == m2) {
-					printf("%d\n", soln[m1][m2]);
-				}
-				else {
-					printf("%d ", soln[m1][m2]);
-				}
+			if (2 == m2 || 5 == m2) {
+				printf("%d | ", soln[m1][m2]);
 			}
-			if (2 == m1 || 5 == m1) {
-				printf("------+-------+------\n");				
+			else if (8 == m2) {
+				printf("%d\n", soln[m1][m2]);
+			}
+			else {
+				printf("%d ", soln[m1][m2]);
 			}
 		}
-		exit(0);
+		if (2 == m1 || 5 == m1) {
+			printf("------+-------+------\n");
+				
+			}
+		}
+	exit(0);
 	}
 	scanf("%d%d", &j, &nxt);
 	printf("\n");
 	if(zr[i][j] == 0)
 		source[i][j] = nxt;
+	
+	FILE *fpx;
+	fpx = fopen("jaal.txt", "w");
+	for(p = 0; p < 9; p++)
+		for(q = 0; q < 9; q++)
+			fprintf(fpx, "%d ",source[p][q]);
+	for(p = 0; p < 9; p++)
+		for(q = 0; q < 9; q++)
+			fprintf(fpx, "%d ",zr[p][q]);
+	for(p = 0; p < 9; p++)
+		for(q = 0; q < 9; q++)
+			fprintf(fpx, "%d ",soln[p][q]);
+	
+	fclose(fpx);
 	gusr();
 }
+void load() {
+	int i, j;
+	FILE *fp;
+	fp = fopen("jaal.txt", "r");
+	for(i = 0; i < 9; i++)
+		for(j = 0; j < 9; j++)
+			fscanf(fp, "%d ", &source[i][j]);
+	for(i = 0; i < 9; i++)
+		for(j = 0; j < 9; j++)
+			fscanf(fp, "%d ", &zr[i][j]);
+	for(i = 0; i < 9; i++)
+		for(j = 0; j < 9; j++)
+			fscanf(fp, "%d ", &soln[i][j]);
+	
+	fclose(fp);
+	gusr();
+}
+
 
 int sol() {
 int puzzle[9][9], c, j, zero = 0;
@@ -201,7 +250,9 @@ int puzzle[9][9], c, j, zero = 0;
 	char fileN[81];
 	printf("Read from\n  1.File\t2.terminal\n");
 	scanf("%d", &c);
+    /* Should we read from stdin or a file? */
 	if (c == 1) {
+		//fileName = "testsu.txt";
 		scanf("%s",fileN);
 		fileName = fileN;
 		sudokuFile = fopen(fileName, "r");
@@ -213,6 +264,7 @@ int puzzle[9][9], c, j, zero = 0;
 		perror("Error Opening File!\n");
 		return 1;
 	}
+    /* Grab the sudoku data from the file (not very robust) */
 	for (i = 0; i < 9; i++) {
 		fscanf(sudokuFile, "%d %d %d %d %d %d %d %d %d", &puzzle[i][0], &puzzle[i][1], &puzzle[i][2], &puzzle[i][3], &puzzle[i][4], &puzzle[i][5], &puzzle[i][6], &puzzle[i][7], &puzzle[i][8]);
 	}
@@ -225,10 +277,12 @@ int puzzle[9][9], c, j, zero = 0;
 				return 0;
 			}
 		}
+    /* Print out the original puzzle, then start solving. */
 	printf("Original Puzzle:\n");
 	printSudoku(puzzle);
 
-	if (solSudo(puzzle)) {
+    /* If successful, print the solution */
+	if (solveSudoku(puzzle)) {
 		printf("Sudoku Solved:\n");
 		printSudoku(puzzle);
 	}
@@ -237,36 +291,41 @@ int puzzle[9][9], c, j, zero = 0;
 	}
 	return 0;
 }
-int solSudo(int puzzle[][9]) {
-	return sudoHelp(puzzle, 0, 0);
+int solveSudoku(int puzzle[][9]) {
+	return sudokuHelper(puzzle, 0, 0);
 }
 
-int sudoHelp(int puzzle[][9], int row, int column) {
-	int nxtnum = 1;
+/*A recursive function that does all the gruntwork in solving the puzzle.*/
+int sudokuHelper(int puzzle[][9], int row, int column) {
+	int nextNumber = 1;
+    /* Have we advanced past the puzzle?  If so, hooray, all previous cells have valid contents!  We're done!*/
 	if (9 == row) {
 		return 1;
 	}
 
+    /*Is this element already set?  If so, we don't want to change it.*/
 	if (puzzle[row][column]) {
 		if (column == 8) {
-			if (sudoHelp(puzzle, row + 1, 0))
+			if (sudokuHelper(puzzle, row + 1, 0))
 				return 1;
 		}
 		else {
-			if (sudoHelp(puzzle, row, column + 1))
+			if (sudokuHelper(puzzle, row, column + 1))
 				return 1;
 		}
 		return 0;
 	}
-	for (; nxtnum < 10; nxtnum++) {
-		if(isValid(nxtnum, puzzle, row, column)) {
-			puzzle[row][column] = nxtnum;
+
+    /*Iterate through the possible numbers for this empty cell and recurse for every valid one, to test if it's part of the valid solution.*/
+	for (; nextNumber < 10; nextNumber++) {
+		if(isValid(nextNumber, puzzle, row, column)) {
+			puzzle[row][column] = nextNumber;
 			if (column == 8) {
-				if (sudoHelp(puzzle, row + 1, 0))
+				if (sudokuHelper(puzzle, row + 1, 0))
 					return 1;
 			}
 			else {
-				if (sudoHelp(puzzle, row, column + 1))
+				if (sudokuHelper(puzzle, row, column + 1))
 					return 1;
 			}
 			puzzle[row][column] = 0;
@@ -275,6 +334,7 @@ int sudoHelp(int puzzle[][9], int row, int column) {
 	return 0;
 }
 
+/*Checks to see if a particular value is presently valid in a given position.*/
 int isValid(int number, int puzzle[][9], int row, int column) {
 	int i = 0;
 	int modRow = 3 * (row / 3);
@@ -284,6 +344,7 @@ int isValid(int number, int puzzle[][9], int row, int column) {
 	int col1 = (column + 2) % 3;
 	int col2 = (column + 4) % 3;
 
+    /* Check for the value in the given row and column */
 	for (i = 0; i < 9; i++) {
 		if (puzzle[i][column] == number)
 			return 0;
@@ -291,6 +352,7 @@ int isValid(int number, int puzzle[][9], int row, int column) {
 			return 0;
 	}
     
+    /* Check the remaining four spaces in this sector */
 	if(puzzle[row1 + modRow][col1 + modCol] == number)
 		return 0;
 	if(puzzle[row2 + modRow][col1 + modCol] == number)
@@ -320,4 +382,29 @@ void printSudoku(int puzzle[][9]) {
 			puts("------+-------+------");
 		}
 	}
+}
+int aout(int puzzle[][9]) {
+	int i, j, zero = 0;
+	for(i = 0; i < 9; i++)
+		for(j = 0; j < 9; j++) {
+			if(puzzle[i][j] == 0)
+				zero++;
+			if(puzzle[i][j] > 9 || puzzle[i][j] < 0) {
+				printf("Invalid sudoku\n");
+				return 0;
+			}
+		}
+    /* Print out the original puzzle, then start solving. */
+	printf("Original Puzzle:\n");
+	printSudoku(puzzle);
+
+    /* If successful, print the solution */
+	if (solveSudoku(puzzle)) {
+		printf("Sudoku Solved:\n");
+		printSudoku(puzzle);
+	}
+	else {
+		printf("Invalid sudoku\n");
+	}
+	return 0;
 }
