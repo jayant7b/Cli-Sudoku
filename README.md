@@ -1,6 +1,5 @@
-Sudoku
-Jayant Bhuskat
-MIS 111603006
+Cli-based 3x3 playable Sudoku generator and solver
+https://gitlab.com/JayantB/SY_DSA_Sudoku.git
 
 This Project is a C data structures project on Sudoku.
 It is a sudoku Generator and Solver.
